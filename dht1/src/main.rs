@@ -3,20 +3,76 @@ use reed_solomon_erasure::ReedSolomon;
 use std::fs::File;
 use std::io::{Read, Write};
 
-fn main() {
-    // Define the input data
-    //let data = b"Hello, world!";
+// fn main() {
+//     // Define the input data
+//     //let data = b"Hello, world!";
 
-    let mut file = File::open("input.txt").expect("Unable to open input.txt");
+//     let mut file = File::open("input.txt").expect("Unable to open input.txt");
+//     let mut data = Vec::new();
+//     file.read_to_end(&mut data).expect("Unable to read input.txt");
+
+//     // Configure the Reed-Solomon encoder
+//     let data_shards = 8;
+//     let parity_shards = 4;
+//     let total_shards = data_shards + parity_shards;
+
+//     let rs = ReedSolomon::<galois_8::Field>::new(data_shards, parity_shards).unwrap();
+
+//     // Pad the input data to fit into the data shards
+//     let shard_size = (data.len() + data_shards - 1) / data_shards;
+//     let padded_data = {
+//         let mut tmp = Vec::with_capacity(shard_size * data_shards);
+//         tmp.extend_from_slice(&data);
+//         tmp.resize(shard_size * data_shards, 0);
+//         tmp
+//     };
+
+//     // Create and populate the shards
+//     let mut shards: Vec<Vec<u8>> = vec![vec![0; shard_size]; total_shards];
+//     for (i, chunk) in padded_data.chunks(shard_size).enumerate() {
+//         shards[i].copy_from_slice(chunk);
+//     }
+
+//     // Encode the input data using Reed-Solomon
+//     rs.encode(&mut shards).unwrap();
+
+//     // Save each shard to an individual file
+//     for (i, shard) in shards.iter().enumerate() {
+//         let filename = format!("shard_{}.bin", i);
+//         let mut file = File::create(&filename).unwrap();
+//         file.write_all(shard).unwrap();
+//         println!("Saved shard {} to disk as {}.", i, filename);
+//     }
+
+//     // Read the shards from disk and restore the original data
+//     let restored_data = restore_data(data_shards, parity_shards, data.len()).unwrap();
+//     println!("Restored data: {:?}", String::from_utf8_lossy(&restored_data));
+// }
+
+fn main() {
+    // Read the input data from the input.txt file and save the encoded shards
+    encode_and_save("input.txt").expect("Unable to encode and save the input data");
+
+    // Read the shards from disk and restore the original data
+    let data_shards = 8;
+    let parity_shards = 4;
+    let original_data_len = std::fs::metadata("input.txt").expect("Unable to read input.txt metadata").len() as usize;
+    let restored_data = restore_data(data_shards, parity_shards, original_data_len).unwrap();
+    println!("Restored data: {:?}", String::from_utf8_lossy(&restored_data));
+}
+
+fn encode_and_save(input_file: &str) -> Result<(), Box<dyn std::error::Error>> {
+    // Read the input data from the input.txt file
+    let mut file = File::open(input_file)?;
     let mut data = Vec::new();
-    file.read_to_end(&mut data).expect("Unable to read input.txt");
+    file.read_to_end(&mut data)?;
 
     // Configure the Reed-Solomon encoder
     let data_shards = 8;
     let parity_shards = 4;
     let total_shards = data_shards + parity_shards;
 
-    let rs = ReedSolomon::<galois_8::Field>::new(data_shards, parity_shards).unwrap();
+    let rs = ReedSolomon::<galois_8::Field>::new(data_shards, parity_shards)?;
 
     // Pad the input data to fit into the data shards
     let shard_size = (data.len() + data_shards - 1) / data_shards;
@@ -34,19 +90,17 @@ fn main() {
     }
 
     // Encode the input data using Reed-Solomon
-    rs.encode(&mut shards).unwrap();
+    rs.encode(&mut shards)?;
 
     // Save each shard to an individual file
     for (i, shard) in shards.iter().enumerate() {
         let filename = format!("shard_{}.bin", i);
-        let mut file = File::create(&filename).unwrap();
-        file.write_all(shard).unwrap();
+        let mut file = File::create(&filename)?;
+        file.write_all(shard)?;
         println!("Saved shard {} to disk as {}.", i, filename);
     }
 
-    // Read the shards from disk and restore the original data
-    let restored_data = restore_data(data_shards, parity_shards, data.len()).unwrap();
-    println!("Restored data: {:?}", String::from_utf8_lossy(&restored_data));
+    Ok(())
 }
 
 fn restore_data(
