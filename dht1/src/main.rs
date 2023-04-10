@@ -5,7 +5,11 @@ use std::io::{Read, Write};
 
 fn main() {
     // Define the input data
-    let data = b"Hello, world!";
+    //let data = b"Hello, world!";
+
+    let mut file = File::open("input.txt").expect("Unable to open input.txt");
+    let mut data = Vec::new();
+    file.read_to_end(&mut data).expect("Unable to read input.txt");
 
     // Configure the Reed-Solomon encoder
     let data_shards = 8;
@@ -18,7 +22,7 @@ fn main() {
     let shard_size = (data.len() + data_shards - 1) / data_shards;
     let padded_data = {
         let mut tmp = Vec::with_capacity(shard_size * data_shards);
-        tmp.extend_from_slice(data);
+        tmp.extend_from_slice(&data);
         tmp.resize(shard_size * data_shards, 0);
         tmp
     };
