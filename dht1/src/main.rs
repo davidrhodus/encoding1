@@ -1,5 +1,6 @@
 use reed_solomon_erasure::galois_8;
 use reed_solomon_erasure::ReedSolomon;
+use std::env;
 use std::fs::File;
 use std::io::{Read, Write};
 
@@ -50,13 +51,31 @@ use std::io::{Read, Write};
 // }
 
 fn main() {
-    // Read the input data from the input.txt file and save the encoded shards
-    encode_and_save("input.txt").expect("Unable to encode and save the input data");
+    // // Read the input data from the input.txt file and save the encoded shards
+    // encode_and_save("input.txt").expect("Unable to encode and save the input data");
+
+    // // Read the shards from disk and restore the original data
+    // let data_shards = 8;
+    // let parity_shards = 4;
+    // let original_data_len = std::fs::metadata("input.txt").expect("Unable to read input.txt metadata").len() as usize;
+    // let restored_data = restore_data(data_shards, parity_shards, original_data_len).unwrap();
+    // println!("Restored data: {:?}", String::from_utf8_lossy(&restored_data));
+
+
+    // Check if the input file name is provided
+    let args: Vec<String> = env::args().collect();
+    if args.len() < 2 {
+        eprintln!("Usage: {} <input_file>", args[0]);
+        return;
+    }
+
+    // Read the input data from the specified file and save the encoded shards
+    encode_and_save(&args[1]).expect("Unable to encode and save the input data");
 
     // Read the shards from disk and restore the original data
     let data_shards = 8;
     let parity_shards = 4;
-    let original_data_len = std::fs::metadata("input.txt").expect("Unable to read input.txt metadata").len() as usize;
+    let original_data_len = std::fs::metadata(&args[1]).expect("Unable to read input file metadata").len() as usize;
     let restored_data = restore_data(data_shards, parity_shards, original_data_len).unwrap();
     println!("Restored data: {:?}", String::from_utf8_lossy(&restored_data));
 }
