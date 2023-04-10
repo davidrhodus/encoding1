@@ -1,6 +1,5 @@
 use reed_solomon_erasure::galois_8;
 use reed_solomon_erasure::ReedSolomon;
-use serde_json;
 use std::fs::File;
 use std::io::Write;
 
@@ -33,11 +32,11 @@ fn main() {
     // Encode the input data using Reed-Solomon
     rs.encode(&mut shards).unwrap();
 
-    // Serialize the encoded data to JSON
-    let serialized_data = serde_json::to_string(&shards).unwrap();
-
-    // Save the serialized data to a file
-    let mut file = File::create("encoded_data.json").unwrap();
-    file.write_all(serialized_data.as_bytes()).unwrap();
-    println!("Encoded data saved to disk.");
+    // Save each shard to an individual file
+    for (i, shard) in shards.iter().enumerate() {
+        let filename = format!("shard_{}.bin", i);
+        let mut file = File::create(&filename).unwrap();
+        file.write_all(shard).unwrap();
+        println!("Saved shard {} to disk as {}.", i, filename);
+    }
 }
